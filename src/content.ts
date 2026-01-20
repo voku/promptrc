@@ -232,6 +232,17 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'Escape') {
     e.stopPropagation(); // Don't prevent, just stop propagation
     hidePromptMenu();
+  } else if (e.key === 'Tab') {
+    // Tab cycles through menu items (focus trap)
+    e.preventDefault();
+    if (e.shiftKey) {
+      // Shift+Tab goes backwards
+      selectedIndex = selectedIndex === 0 ? items.length - 1 : selectedIndex - 1;
+    } else {
+      // Tab goes forwards
+      selectedIndex = (selectedIndex + 1) % items.length;
+    }
+    updateSelection(items);
   }
 }, true);
 

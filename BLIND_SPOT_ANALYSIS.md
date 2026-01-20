@@ -243,22 +243,30 @@ promptMenu.style.left = `${menuLeft}px`;
 
 ## Recommended Priority Fixes
 
-### Phase 1: Critical UX Fixes (Week 1)
-1. ✅ **Add debounce/delay** before showing menu (300ms)
-2. ✅ **Detect cursor position** properly
-3. ✅ **Add per-site toggle** in popup
-4. ✅ **Improve keyboard event handling** (don't hijack unnecessarily)
+### Phase 1: Critical UX Fixes (Week 1) ✅ COMPLETED
+1. ✅ **Add debounce/delay** before showing menu (300ms) - DONE
+2. ✅ **Detect cursor position** properly - DONE
+3. ✅ **Add per-site toggle** in popup - DONE
+4. ✅ **Improve keyboard event handling** (don't hijack unnecessarily) - DONE
 
-### Phase 2: Performance Optimizations (Week 2)
-5. ✅ **Optimize input event listener** (only trigger on actual `/`)
-6. ✅ **Reuse menu DOM** instead of recreating
-7. ✅ **Add pattern caching**
-8. ✅ **Lazy load patterns**
+### Phase 2: Performance Optimizations (Week 2) ✅ COMPLETED
+5. ✅ **Optimize input event listener** (only trigger on actual `/`) - DONE
+6. ✅ **Reuse menu DOM** instead of recreating - DONE (commit 3b1f1a7)
+7. ✅ **Add pattern caching** - DONE (LRU cache, 50 entry limit)
+8. ✅ **Lazy load patterns** - N/A (patterns bundled, acceptable size)
 
-### Phase 3: Polish & Accessibility (Week 3)
-9. ✅ **Add ARIA attributes**
-10. ✅ **Improve positioning** (check viewport bounds)
-11. ✅ **Add visual transitions**
+### Phase 3: Polish & Accessibility (Week 3) ✅ COMPLETED
+9. ✅ **Add ARIA attributes** - DONE
+10. ✅ **Improve positioning** (check viewport bounds) - DONE
+11. ✅ **Add visual transitions** - DONE
+
+### Additional Improvements Implemented
+12. ✅ **MutationObserver for SPA cleanup** - DONE (commit 3b1f1a7)
+13. ✅ **IME composition support** - DONE (commit 3b1f1a7)
+14. ✅ **Global toggle keyboard shortcut** - DONE (Alt+Shift+P)
+15. ✅ **Double-slash activation option** - DONE (configurable)
+16. ✅ **Tab key navigation** - DONE (focus trap)
+17. ✅ **will-change CSS optimization** - DONE
 
 ---
 
