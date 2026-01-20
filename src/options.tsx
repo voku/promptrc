@@ -148,7 +148,7 @@ const Options: React.FC = () => {
         <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2">How to use slash commands:</h3>
           <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1">
-            <li>Type <code className="bg-blue-100 px-1 py-0.5 rounded">/</code> in any text field (ChatGPT, Claude, Gemini, etc.)</li>
+            <li>Type <code className="bg-blue-100 px-1 py-0.5 rounded">/</code> in any text field (ChatGPT, Claude, etc.)</li>
             <li>Start typing to filter patterns (e.g., <code className="bg-blue-100 px-1 py-0.5 rounded">/rabbit</code>)</li>
             <li>Use ↑↓ arrows to navigate, Enter to select</li>
             <li>Or use <code className="bg-blue-100 px-1 py-0.5 rounded">Ctrl+Shift+I</code> to open the prompt picker</li>
