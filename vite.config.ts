@@ -7,7 +7,7 @@ export default defineConfig({
         port: 3000,
         host: '0.0.0.0',
       },
-      base: './',
+      base: process.env.NODE_ENV === 'production' ? '/promptrc/' : './',
       plugins: [react()],
       resolve: {
         alias: {
