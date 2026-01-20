@@ -99,6 +99,16 @@ const App: React.FC = () => {
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-8 text-center text-gray-500 text-sm mt-auto">
         <p className="font-mono">Prompt Engineer Toolkit // 2025</p>
+        <p className="mt-2">
+          <a 
+            href="https://github.com/voku/promptrc" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-emerald-600 hover:text-emerald-700 underline"
+          >
+            Contribute on GitHub
+          </a>
+        </p>
       </footer>
 
       {/* Terminal Modal */}

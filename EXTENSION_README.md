@@ -5,7 +5,7 @@ A Chrome browser extension that brings prompt engineering patterns directly into
 ## Features
 
 ### 🎯 Slash Commands
-Type `/` in any text field (ChatGPT, Claude, Gemini, etc.) to trigger the prompt picker:
+Type `/` in any text field (ChatGPT, Claude, etc.) to trigger the prompt picker:
 - Start typing to filter patterns (e.g., `/rabbit`)
 - Use ↑↓ arrow keys to navigate
 - Press Enter to insert the selected prompt

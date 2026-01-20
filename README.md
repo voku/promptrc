@@ -18,7 +18,7 @@ A collection of LLM rituals and dev prompt patterns. Available as both a web app
 View and browse all patterns in a beautiful, responsive web interface.
 
 ### 🔌 Chrome Extension
-Use prompt patterns directly in any LLM interface (ChatGPT, Claude, Gemini, etc.)
+Use prompt patterns directly in any LLM interface (ChatGPT, Claude, etc.)
 
 **Key Extension Features:**
 - **Slash Commands**: Type `/` in any text field to trigger prompt picker
@@ -37,14 +37,12 @@ Use prompt patterns directly in any LLM interface (ChatGPT, Claude, Gemini, etc.
    npm install
    ```
 
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key (optional)
-
-3. Run the app:
+2. Run the app:
    ```bash
    npm run dev
    ```
 
-4. Open http://localhost:3000
+3. Open http://localhost:3000
 
 ## 🔌 Chrome Extension
 
@@ -62,7 +60,7 @@ Use prompt patterns directly in any LLM interface (ChatGPT, Claude, Gemini, etc.
 ### Usage
 
 #### Slash Commands
-1. Open any LLM interface (ChatGPT, Claude, Gemini, etc.)
+1. Open any LLM interface (ChatGPT, Claude, etc.)
 2. Click in the text input field
 3. Type `/` followed by a search term:
    - `/rabbit` → "Follow the white rabbit..."
@@ -127,6 +125,35 @@ Structured prompting techniques organized by function:
 - Checkpointing
 - Context compression
 - Hard reset
+
+### 🔍 Key Files Detector
+
+A powerful helper prompt to identify critical files in a codebase:
+
+```
+**Task:** List the key files for understanding this codebase.
+
+**Context:** I need to quickly orient myself in a new codebase or project.
+
+**Your Task:**
+1. Analyze the project structure
+2. Identify 5-10 most important files that reveal:
+   - Core architecture and design patterns
+   - Main entry points and control flow
+   - Key business logic and algorithms
+   - Configuration and dependencies
+   - Testing strategy (if applicable)
+
+**Output Format:**
+For each file, provide:
+- File path
+- Purpose (1-2 sentences)
+- Why it's critical to understand
+
+**Prioritize:** Files that give maximum insight with minimal reading time.
+```
+
+**Use Case:** When starting work on a new project, use this prompt with your LLM to get a curated list of the most important files to review first.
 
 ## 🛠️ Development
 
@@ -209,8 +236,6 @@ MIT License - See LICENSE file for details
 
 Original patterns curated by the prompt engineering community. 
 Extension conversion and implementation by [voku](https://github.com/voku).
-
-View the original app in AI Studio: https://ai.studio/apps/drive/1XoBKqe77qjQDDzsNJIDGPJcDtVKM1Vix
 
 ---
 
