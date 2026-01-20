@@ -39,7 +39,7 @@ export default defineConfig({
                 return '[name][extname]';
               }
               return 'assets/[name]-[hash][extname]';
-            }
+            },
           }
         }
       }

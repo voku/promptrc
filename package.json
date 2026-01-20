@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/post-build.js",
-    "build:extension": "BUILD_TARGET=extension vite build && node scripts/post-build.js",
+    "build:extension": "BUILD_TARGET=extension node scripts/build-extension.js && node scripts/post-build.js",
     "package:extension": "bash scripts/package-extension.sh",
     "preview": "vite preview"
   },
