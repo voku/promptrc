@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Settings, Copy, ExternalLink } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, Settings, Copy, ExternalLink, Power } from 'lucide-react';
 import { ALL_PATTERNS } from './constants';
 import { PromptPattern, PatternType } from './types';
 
@@ -7,6 +7,24 @@ const PopupApp: React.FC = () => {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | PatternType>('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [currentHostname, setCurrentHostname] = useState('');
+  const [siteDisabled, setSiteDisabled] = useState(false);
+
+  useEffect(() => {
+    // Get current tab hostname
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.url) {
+        const url = new URL(tabs[0].url);
+        setCurrentHostname(url.hostname);
+        
+        // Check if site is disabled
+        chrome.storage.sync.get(['disabledSites'], (result) => {
+          const disabledSites = result.disabledSites || [];
+          setSiteDisabled(disabledSites.includes(url.hostname));
+        });
+      }
+    });
+  }, []);
 
   const filteredPatterns = useMemo(() => {
     return ALL_PATTERNS.filter(p => {
@@ -41,6 +59,39 @@ const PopupApp: React.FC = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  const toggleSiteDisabled = async () => {
+    const newDisabledState = !siteDisabled;
+    
+    // Update storage
+    chrome.storage.sync.get(['disabledSites'], (result) => {
+      let disabledSites = result.disabledSites || [];
+      
+      if (newDisabledState) {
+        // Add to disabled list
+        if (!disabledSites.includes(currentHostname)) {
+          disabledSites.push(currentHostname);
+        }
+      } else {
+        // Remove from disabled list
+        disabledSites = disabledSites.filter((site: string) => site !== currentHostname);
+      }
+      
+      chrome.storage.sync.set({ disabledSites }, () => {
+        setSiteDisabled(newDisabledState);
+        
+        // Notify content script
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: 'toggleSite',
+              disabled: newDisabledState
+            });
+          }
+        });
+      });
+    });
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
@@ -52,14 +103,33 @@ const PopupApp: React.FC = () => {
             </div>
             <span className="font-mono text-sm font-bold text-gray-900">.promptrc</span>
           </div>
-          <button
-            onClick={openOptions}
-            className="p-1.5 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
-            title="Open settings"
-          >
-            <Settings size={16} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleSiteDisabled}
+              className={`p-1.5 rounded-md transition-colors ${
+                siteDisabled 
+                  ? 'text-red-600 bg-red-50 hover:bg-red-100' 
+                  : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
+              }`}
+              title={siteDisabled ? 'Enable on this site' : 'Disable on this site'}
+            >
+              <Power size={16} />
+            </button>
+            <button
+              onClick={openOptions}
+              className="p-1.5 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+              title="Open settings"
+            >
+              <Settings size={16} />
+            </button>
+          </div>
         </div>
+        
+        {siteDisabled && (
+          <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800">
+            ⚠️ Extension disabled on {currentHostname}
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">
