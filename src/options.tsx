@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+import './index.css';
 import { Plus, Trash2, Save, X } from 'lucide-react';
 import { PromptPattern, PatternType } from '../types';
 import { ALL_PATTERNS } from '../constants';
