@@ -7,7 +7,8 @@ export default defineConfig({
         port: 3000,
         host: '0.0.0.0',
       },
-      base: process.env.BASE_PATH || (process.env.NODE_ENV === 'production' ? '/promptrc/' : './'),
+      // Use relative paths for extension builds, absolute paths for web app
+      base: process.env.BUILD_TARGET === 'extension' ? './' : (process.env.BASE_PATH || (process.env.NODE_ENV === 'production' ? '/promptrc/' : './')),
       plugins: [react()],
       resolve: {
         alias: {
