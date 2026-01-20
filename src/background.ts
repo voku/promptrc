@@ -1,6 +1,8 @@
 // Background service worker for the Chrome extension
 // Handles extension lifecycle, storage initialization, and command shortcuts
 
+import type { PromptPattern } from '../types';
+
 // Initialize default patterns in storage on installation
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('.promptrc extension installed');
@@ -47,10 +49,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'saveCustomPattern') {
     // Save a custom pattern
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      const customPatterns = (result.customPatterns || []) as any[];
+      if (chrome.runtime.lastError) {
+        console.error('Storage error:', chrome.runtime.lastError);
+        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+        return;
+      }
+      const customPatterns = (result.customPatterns || []) as PromptPattern[];
       customPatterns.push(request.pattern);
       chrome.storage.sync.set({ customPatterns }, () => {
-        sendResponse({ success: true });
+        if (chrome.runtime.lastError) {
+          console.error('Storage error:', chrome.runtime.lastError);
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+        } else {
+          sendResponse({ success: true });
+        }
       });
     });
     return true;
@@ -59,10 +71,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'deleteCustomPattern') {
     // Delete a custom pattern
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      const customPatterns = (result.customPatterns || []) as any[];
-      const filtered = customPatterns.filter((p: any) => p.id !== request.patternId);
+      if (chrome.runtime.lastError) {
+        console.error('Storage error:', chrome.runtime.lastError);
+        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+        return;
+      }
+      const customPatterns = (result.customPatterns || []) as PromptPattern[];
+      const filtered = customPatterns.filter((p: PromptPattern) => p.id !== request.patternId);
       chrome.storage.sync.set({ customPatterns: filtered }, () => {
-        sendResponse({ success: true });
+        if (chrome.runtime.lastError) {
+          console.error('Storage error:', chrome.runtime.lastError);
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+        } else {
+          sendResponse({ success: true });
+        }
       });
     });
     return true;

@@ -23,9 +23,17 @@ const Options: React.FC = () => {
   }, []);
 
   const loadCustomPatterns = async () => {
-    chrome.storage.sync.get(['customPatterns'], (result) => {
-      setCustomPatterns((result.customPatterns || []) as PromptPattern[]);
-    });
+    try {
+      chrome.storage.sync.get(['customPatterns'], (result) => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to load custom patterns:', chrome.runtime.lastError);
+          return;
+        }
+        setCustomPatterns((result.customPatterns || []) as PromptPattern[]);
+      });
+    } catch (error) {
+      console.error('Error loading custom patterns:', error);
+    }
   };
 
   const handleSavePattern = async () => {
@@ -45,6 +53,10 @@ const Options: React.FC = () => {
     };
 
     chrome.storage.sync.get(['customPatterns'], (result) => {
+      if (chrome.runtime.lastError) {
+        alert('Failed to save pattern: ' + chrome.runtime.lastError.message);
+        return;
+      }
       const patterns = (result.customPatterns || []) as PromptPattern[];
       const existingIndex = patterns.findIndex((p: PromptPattern) => p.id === newPattern.id);
       
@@ -55,6 +67,10 @@ const Options: React.FC = () => {
       }
 
       chrome.storage.sync.set({ customPatterns: patterns }, () => {
+        if (chrome.runtime.lastError) {
+          alert('Failed to save pattern: ' + chrome.runtime.lastError.message);
+          return;
+        }
         loadCustomPatterns();
         setIsAdding(false);
         resetForm();
@@ -68,9 +84,17 @@ const Options: React.FC = () => {
     if (!confirm('Delete this custom pattern?')) return;
 
     chrome.storage.sync.get(['customPatterns'], (result) => {
+      if (chrome.runtime.lastError) {
+        alert('Failed to delete pattern: ' + chrome.runtime.lastError.message);
+        return;
+      }
       const patterns = (result.customPatterns || []) as PromptPattern[];
       const filtered = patterns.filter((p: PromptPattern) => p.id !== patternId);
       chrome.storage.sync.set({ customPatterns: filtered }, () => {
+        if (chrome.runtime.lastError) {
+          alert('Failed to delete pattern: ' + chrome.runtime.lastError.message);
+          return;
+        }
         loadCustomPatterns();
         setSaveStatus('Deleted!');
         setTimeout(() => setSaveStatus(''), 2000);

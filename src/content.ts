@@ -243,37 +243,47 @@ function escapeHtml(text: string): string {
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'showPromptPicker') {
-    // Show prompt menu at current element
-    if (currentElement) {
-      showPromptMenu(currentElement, '');
+  try {
+    if (request.action === 'showPromptPicker') {
+      // Show prompt menu at current element
+      if (currentElement) {
+        showPromptMenu(currentElement, '');
+      }
+      sendResponse({ success: true });
+      return true;
     }
-  }
-  
-  if (request.action === 'insertPrompt') {
-    // Insert pattern from popup
-    const pattern = request.pattern;
     
-    // Find the currently focused editable element
-    const activeElement = document.activeElement as HTMLElement;
-    if (activeElement && isEditableElement(activeElement)) {
-      currentElement = activeElement;
-      const currentText = getElementText(currentElement);
-      const newText = currentText + (currentText ? '\n' : '') + pattern.trigger;
-      setElementText(currentElement, newText);
-      currentElement.focus();
-    } else {
-      // If no element is focused, try to find any editable element
-      const editableElements = document.querySelectorAll('textarea, input[type="text"], [contenteditable="true"]');
-      if (editableElements.length > 0) {
-        currentElement = editableElements[0] as HTMLElement;
+    if (request.action === 'insertPrompt') {
+      // Insert pattern from popup
+      const pattern = request.pattern;
+      
+      // Find the currently focused editable element
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && isEditableElement(activeElement)) {
+        currentElement = activeElement;
         const currentText = getElementText(currentElement);
         const newText = currentText + (currentText ? '\n' : '') + pattern.trigger;
         setElementText(currentElement, newText);
         currentElement.focus();
+      } else {
+        // If no element is focused, try to find any editable element
+        const editableElements = document.querySelectorAll('textarea, input[type="text"], [contenteditable="true"]');
+        if (editableElements.length > 0) {
+          currentElement = editableElements[0] as HTMLElement;
+          const currentText = getElementText(currentElement);
+          const newText = currentText + (currentText ? '\n' : '') + pattern.trigger;
+          setElementText(currentElement, newText);
+          currentElement.focus();
+        }
       }
+      sendResponse({ success: true });
+      return true;
     }
+  } catch (error) {
+    console.error('Error handling message:', error);
+    sendResponse({ success: false, error: String(error) });
   }
+  return true;
 });
 
 // Export for TypeScript
