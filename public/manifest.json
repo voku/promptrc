@@ -49,6 +49,13 @@
         "mac": "Command+Shift+I"
       },
       "description": "Insert prompt at cursor"
+    },
+    "toggle_extension": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "Alt+Shift+P"
+      },
+      "description": "Toggle extension on/off globally"
     }
   },
   "web_accessible_resources": [

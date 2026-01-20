@@ -31,6 +31,36 @@ chrome.commands.onCommand.addListener((command) => {
       }
     });
   }
+  
+  if (command === 'toggle_extension') {
+    // Toggle extension globally
+    chrome.storage.sync.get(['extensionEnabled'], (result) => {
+      const currentState = result.extensionEnabled !== false; // Default to true
+      const newState = !currentState;
+      
+      chrome.storage.sync.set({ extensionEnabled: newState }, () => {
+        // Notify all tabs
+        chrome.tabs.query({}, (tabs) => {
+          tabs.forEach(tab => {
+            if (tab.id) {
+              chrome.tabs.sendMessage(tab.id, {
+                action: 'toggleExtension',
+                enabled: newState
+              });
+            }
+          });
+        });
+        
+        // Show badge to indicate state
+        chrome.action.setBadgeText({ 
+          text: newState ? '' : 'OFF' 
+        });
+        chrome.action.setBadgeBackgroundColor({ 
+          color: '#ef4444' 
+        });
+      });
+    });
+  }
 });
 
 // Handle messages from content scripts

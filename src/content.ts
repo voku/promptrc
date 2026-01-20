@@ -7,6 +7,7 @@ import type { PromptPattern } from '../types';
 // Configuration
 const DEBOUNCE_DELAY = 300; // ms to wait before showing menu
 const MIN_TRIGGER_LENGTH = 1; // minimum chars after / to show menu
+const ENABLE_DOUBLE_SLASH = false; // Set to true to require // instead of /
 
 // Track the currently focused element
 let currentElement: HTMLElement | null = null;
@@ -18,11 +19,50 @@ let debounceTimer: number | null = null;
 let extensionEnabled = true;
 let siteDisabled = false;
 
+// Pattern cache for performance
+let patternCache: Map<string, PromptPattern[]> = new Map();
+const CACHE_SIZE_LIMIT = 50;
+
+// MutationObserver to detect page changes and clean up
+let pageObserver: MutationObserver | null = null;
+
+// Initialize observer for SPA navigation detection
+function initPageObserver() {
+  if (pageObserver) return;
+  
+  pageObserver = new MutationObserver((mutations) => {
+    // Check if significant DOM changes occurred
+    const hasSignificantChanges = mutations.some(mutation => 
+      mutation.type === 'childList' && 
+      mutation.removedNodes.length > 0
+    );
+    
+    if (hasSignificantChanges && promptMenu) {
+      // Check if our menu's parent is still in the DOM
+      if (!document.body.contains(promptMenu)) {
+        // Clean up orphaned menu
+        promptMenu = null;
+        slashCommandActive = false;
+      }
+    }
+  });
+  
+  // Observe document body for changes
+  pageObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+// Initialize observer when script loads
+initPageObserver();
+
 // Check if extension is enabled for this site
-chrome.storage.sync.get(['disabledSites'], (result) => {
+chrome.storage.sync.get(['disabledSites', 'extensionEnabled'], (result) => {
   const disabledSites = result.disabledSites || [];
   const currentHostname = window.location.hostname;
   siteDisabled = disabledSites.includes(currentHostname);
+  extensionEnabled = result.extensionEnabled !== false; // Default to true
 });
 
 // Detect if page has native slash commands (heuristic)
@@ -67,15 +107,40 @@ function isSlashAtCursor(text: string, cursorPos: number): boolean {
   
   if (lastSlashIndex === -1) return false;
   
+  // Check for double-slash if enabled
+  if (ENABLE_DOUBLE_SLASH) {
+    const previousChar = lastSlashIndex > 0 ? textBeforeCursor[lastSlashIndex - 1] : '';
+    if (previousChar !== '/') return false;
+  }
+  
   // Check if there's text between slash and cursor without spaces/newlines
   const textAfterSlash = textBeforeCursor.substring(lastSlashIndex + 1);
   return !textAfterSlash.includes(' ') && !textAfterSlash.includes('\n');
 }
 
+// Track IME composition state
+let isComposing = false;
+
+// Listen for IME composition events
+document.addEventListener('compositionstart', () => {
+  isComposing = true;
+  // Hide menu during composition
+  if (slashCommandActive) {
+    hidePromptMenu();
+  }
+});
+
+document.addEventListener('compositionend', () => {
+  isComposing = false;
+});
+
 // Listen for input in editable fields with optimization
 document.addEventListener('input', (e) => {
   // Early exit if extension is disabled
   if (!extensionEnabled || siteDisabled) return;
+  
+  // Don't process during IME composition
+  if (isComposing) return;
   
   const target = e.target as HTMLElement;
   
@@ -207,36 +272,83 @@ function setElementText(element: HTMLElement, text: string): void {
 }
 
 function showPromptMenu(target: HTMLElement, query: string) {
-  // Remove existing menu
-  hidePromptMenu();
+  // Filter patterns by query with caching
+  const cacheKey = query.toLowerCase();
+  let filteredPatterns: PromptPattern[];
   
-  // Filter patterns by query
-  const filteredPatterns = ALL_PATTERNS.filter(pattern => {
-    if (!query) return true;
-    return pattern.trigger.toLowerCase().includes(query) ||
-           pattern.purpose.toLowerCase().includes(query) ||
-           pattern.id.toLowerCase().includes(query);
-  }).slice(0, 8); // Limit to 8 results
+  if (patternCache.has(cacheKey)) {
+    filteredPatterns = patternCache.get(cacheKey)!;
+  } else {
+    filteredPatterns = ALL_PATTERNS.filter(pattern => {
+      if (!query) return true;
+      return pattern.trigger.toLowerCase().includes(query) ||
+             pattern.purpose.toLowerCase().includes(query) ||
+             pattern.id.toLowerCase().includes(query);
+    }).slice(0, 8); // Limit to 8 results
+    
+    // Cache the result (with size limit)
+    if (patternCache.size >= CACHE_SIZE_LIMIT) {
+      const firstKey = patternCache.keys().next().value;
+      patternCache.delete(firstKey);
+    }
+    patternCache.set(cacheKey, filteredPatterns);
+  }
   
-  if (filteredPatterns.length === 0) return;
+  if (filteredPatterns.length === 0) {
+    hidePromptMenu();
+    return;
+  }
   
-  // Create menu element with ARIA attributes
-  promptMenu = document.createElement('div');
-  promptMenu.className = 'promptrc-menu';
-  promptMenu.setAttribute('role', 'listbox');
-  promptMenu.setAttribute('aria-label', 'Prompt pattern suggestions');
+  // Reuse or create menu element
+  if (!promptMenu) {
+    promptMenu = createMenuElement();
+  }
+  
+  // Update menu content
+  updateMenuContent(filteredPatterns);
   
   // Calculate z-index dynamically
   const highestZIndex = getHighestZIndex();
   const menuZIndex = Math.max(highestZIndex + 1, 999999);
+  promptMenu.style.zIndex = String(menuZIndex);
   
-  promptMenu.style.cssText = `
+  // Position menu with viewport bounds checking
+  positionMenu(target, promptMenu);
+  
+  // Ensure menu is in DOM and visible
+  if (!promptMenu.parentElement) {
+    document.body.appendChild(promptMenu);
+  }
+  promptMenu.style.display = 'block';
+  
+  // Trigger animation
+  requestAnimationFrame(() => {
+    if (promptMenu) {
+      promptMenu.style.opacity = '1';
+      promptMenu.style.transform = 'translateY(0)';
+    }
+  });
+  
+  slashCommandActive = true;
+  
+  // Announce to screen readers
+  announceToScreenReader(`${filteredPatterns.length} prompt patterns available`);
+}
+
+// Create reusable menu element
+function createMenuElement(): HTMLElement {
+  const menu = document.createElement('div');
+  menu.className = 'promptrc-menu';
+  menu.setAttribute('role', 'listbox');
+  menu.setAttribute('aria-label', 'Prompt pattern suggestions');
+  
+  menu.style.cssText = `
     position: fixed;
     background: white;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    z-index: ${menuZIndex};
+    z-index: 999999;
     max-height: 400px;
     overflow-y: auto;
     min-width: 400px;
@@ -244,10 +356,22 @@ function showPromptMenu(target: HTMLElement, query: string) {
     opacity: 0;
     transform: translateY(-8px);
     transition: opacity 0.15s ease, transform 0.15s ease;
+    will-change: opacity, transform;
   `;
   
+  return menu;
+}
+
+// Update menu content without recreating
+function updateMenuContent(patterns: PromptPattern[]) {
+  if (!promptMenu) return;
+  
+  // Clear existing content
+  promptMenu.innerHTML = '';
+  selectedIndex = 0;
+  
   // Add patterns to menu
-  filteredPatterns.forEach((pattern, index) => {
+  patterns.forEach((pattern, index) => {
     const item = document.createElement('div');
     item.className = 'promptrc-menu-item';
     item.setAttribute('role', 'option');
@@ -285,24 +409,8 @@ function showPromptMenu(target: HTMLElement, query: string) {
   // Set active descendant for accessibility
   promptMenu.setAttribute('aria-activedescendant', 'promptrc-option-0');
   
-  // Position menu with viewport bounds checking
-  positionMenu(target, promptMenu);
-  
-  document.body.appendChild(promptMenu);
-  
-  // Trigger animation
-  requestAnimationFrame(() => {
-    if (promptMenu) {
-      promptMenu.style.opacity = '1';
-      promptMenu.style.transform = 'translateY(0)';
-    }
-  });
-  
   // Highlight first item
   updateSelection(promptMenu.querySelectorAll('.promptrc-menu-item'));
-  
-  // Announce to screen readers
-  announceToScreenReader(`${filteredPatterns.length} prompt patterns available`);
 }
 
 // Get highest z-index on page
@@ -363,15 +471,15 @@ function announceToScreenReader(message: string) {
 }
 
 function hidePromptMenu() {
-  if (promptMenu) {
+  if (promptMenu && promptMenu.parentElement) {
     // Animate out
     promptMenu.style.opacity = '0';
     promptMenu.style.transform = 'translateY(-8px)';
     
+    // Keep menu in DOM but hidden (for reuse)
     setTimeout(() => {
-      if (promptMenu) {
-        promptMenu.remove();
-        promptMenu = null;
+      if (promptMenu && promptMenu.parentElement) {
+        promptMenu.style.display = 'none';
       }
     }, 150);
   }
