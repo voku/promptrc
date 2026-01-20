@@ -9,6 +9,32 @@ const PopupApp: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [currentHostname, setCurrentHostname] = useState('');
   const [siteDisabled, setSiteDisabled] = useState(false);
+  const [allPatterns, setAllPatterns] = useState<PromptPattern[]>(ALL_PATTERNS);
+
+  // Load custom patterns and merge with built-in patterns
+  useEffect(() => {
+    const loadPatterns = () => {
+      chrome.storage.sync.get(['customPatterns'], (result) => {
+        const customPatterns = (result.customPatterns || []) as PromptPattern[];
+        setAllPatterns([...ALL_PATTERNS, ...customPatterns]);
+      });
+    };
+
+    loadPatterns();
+
+    // Listen for storage changes to keep UI in sync
+    const storageListener = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'sync' && changes.customPatterns) {
+        loadPatterns();
+      }
+    };
+
+    chrome.storage.onChanged.addListener(storageListener);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(storageListener);
+    };
+  }, []);
 
   useEffect(() => {
     // Get current tab hostname
@@ -27,7 +53,7 @@ const PopupApp: React.FC = () => {
   }, []);
 
   const filteredPatterns = useMemo(() => {
-    return ALL_PATTERNS.filter(p => {
+    return allPatterns.filter(p => {
       const matchesSearch = 
         p.trigger.toLowerCase().includes(search.toLowerCase()) || 
         p.purpose.toLowerCase().includes(search.toLowerCase()) ||
@@ -35,7 +61,7 @@ const PopupApp: React.FC = () => {
       const matchesType = typeFilter === 'ALL' || p.type === typeFilter;
       return matchesSearch && matchesType;
     }).slice(0, 10); // Limit to 10 for popup
-  }, [search, typeFilter]);
+  }, [search, typeFilter, allPatterns]);
 
   const handleCopyPrompt = (pattern: PromptPattern) => {
     navigator.clipboard.writeText(pattern.trigger);

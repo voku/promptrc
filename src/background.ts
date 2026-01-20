@@ -7,13 +7,13 @@ import type { PromptPattern } from '../types';
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('.promptrc extension installed');
   
-  // Check if patterns are already stored
-  const result = await chrome.storage.sync.get(['patterns', 'customPatterns']);
+  // Check if customPatterns are already stored
+  const result = await chrome.storage.sync.get(['customPatterns']);
   
-  if (!result.patterns) {
-    // Initialize with empty array - patterns will be loaded from constants
+  if (!result.customPatterns) {
+    // Initialize with empty array for custom patterns
+    // Built-in patterns are in constants.ts and don't need storage
     await chrome.storage.sync.set({ 
-      patterns: [],
       customPatterns: []
     });
   }
@@ -66,10 +66,9 @@ chrome.commands.onCommand.addListener((command) => {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getPatterns') {
-    // Fetch patterns from storage
-    chrome.storage.sync.get(['patterns', 'customPatterns'], (result) => {
+    // Fetch custom patterns from storage
+    chrome.storage.sync.get(['customPatterns'], (result) => {
       sendResponse({ 
-        patterns: result.patterns || [],
         customPatterns: result.customPatterns || []
       });
     });

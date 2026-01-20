@@ -23,6 +23,32 @@ let siteDisabled = false;
 let patternCache: Map<string, PromptPattern[]> = new Map();
 const CACHE_SIZE_LIMIT = 50;
 
+// Store all available patterns (built-in + custom)
+let allAvailablePatterns: PromptPattern[] = [...ALL_PATTERNS];
+
+// Load custom patterns and merge with built-in patterns
+async function loadAllPatterns() {
+  return new Promise<PromptPattern[]>((resolve) => {
+    chrome.storage.sync.get(['customPatterns'], (result) => {
+      const customPatterns = (result.customPatterns || []) as PromptPattern[];
+      allAvailablePatterns = [...ALL_PATTERNS, ...customPatterns];
+      // Clear cache when patterns change
+      patternCache.clear();
+      resolve(allAvailablePatterns);
+    });
+  });
+}
+
+// Listen for storage changes to reload patterns
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'sync' && changes.customPatterns) {
+    loadAllPatterns();
+  }
+});
+
+// Initialize patterns on load
+loadAllPatterns();
+
 // MutationObserver to detect page changes and clean up
 let pageObserver: MutationObserver | null = null;
 
@@ -290,7 +316,8 @@ function showPromptMenu(target: HTMLElement, query: string) {
   if (patternCache.has(cacheKey)) {
     filteredPatterns = patternCache.get(cacheKey)!;
   } else {
-    filteredPatterns = ALL_PATTERNS.filter(pattern => {
+    // Use allAvailablePatterns which includes custom patterns
+    filteredPatterns = allAvailablePatterns.filter(pattern => {
       if (!query) return true;
       return pattern.trigger.toLowerCase().includes(query) ||
              pattern.purpose.toLowerCase().includes(query) ||
