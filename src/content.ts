@@ -425,7 +425,7 @@ function updateMenuContent(patterns: PromptPattern[]) {
     
     item.innerHTML = `
       <div style="font-weight: 600; font-size: 13px; color: #111827; margin-bottom: 4px;">
-        ${pattern.icon || '📝'} ${escapeHtml(pattern.id.replace(/^(ritual|pat)-/, ''))}
+        ${escapeHtml(pattern.icon || '📝')} ${escapeHtml(pattern.id.replace(/^(ritual|pat)-/, ''))}
       </div>
       <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">
         ${escapeHtml(pattern.trigger.substring(0, 60))}${pattern.trigger.length > 60 ? '...' : ''}
@@ -452,18 +452,13 @@ function updateMenuContent(patterns: PromptPattern[]) {
 }
 
 // Get highest z-index on page
+// Using a fixed high value for better performance
+// Querying all DOM elements can be slow on complex pages
 function getHighestZIndex(): number {
-  const elements = document.querySelectorAll('*');
-  let highest = 0;
-  
-  elements.forEach(el => {
-    const zIndex = parseInt(window.getComputedStyle(el).zIndex);
-    if (!isNaN(zIndex) && zIndex > highest) {
-      highest = zIndex;
-    }
-  });
-  
-  return highest;
+  // Use a fixed high value that's almost always sufficient
+  // Most web apps use z-index values under 10000
+  // This avoids expensive DOM traversal on every menu display
+  return 999998; // Menu will use 999999
 }
 
 // Position menu with bounds checking
