@@ -24,7 +24,7 @@ const Options: React.FC = () => {
 
   const loadCustomPatterns = async () => {
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      setCustomPatterns(result.customPatterns || []);
+      setCustomPatterns((result.customPatterns || []) as PromptPattern[]);
     });
   };
 
@@ -45,7 +45,7 @@ const Options: React.FC = () => {
     };
 
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      const patterns = result.customPatterns || [];
+      const patterns = (result.customPatterns || []) as PromptPattern[];
       const existingIndex = patterns.findIndex((p: PromptPattern) => p.id === newPattern.id);
       
       if (existingIndex !== -1) {
@@ -68,7 +68,7 @@ const Options: React.FC = () => {
     if (!confirm('Delete this custom pattern?')) return;
 
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      const patterns = result.customPatterns || [];
+      const patterns = (result.customPatterns || []) as PromptPattern[];
       const filtered = patterns.filter((p: PromptPattern) => p.id !== patternId);
       chrome.storage.sync.set({ customPatterns: filtered }, () => {
         loadCustomPatterns();

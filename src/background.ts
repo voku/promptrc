@@ -47,7 +47,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'saveCustomPattern') {
     // Save a custom pattern
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      const customPatterns = result.customPatterns || [];
+      const customPatterns = (result.customPatterns || []) as any[];
       customPatterns.push(request.pattern);
       chrome.storage.sync.set({ customPatterns }, () => {
         sendResponse({ success: true });
@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'deleteCustomPattern') {
     // Delete a custom pattern
     chrome.storage.sync.get(['customPatterns'], (result) => {
-      const customPatterns = result.customPatterns || [];
+      const customPatterns = (result.customPatterns || []) as any[];
       const filtered = customPatterns.filter((p: any) => p.id !== request.patternId);
       chrome.storage.sync.set({ customPatterns: filtered }, () => {
         sendResponse({ success: true });
