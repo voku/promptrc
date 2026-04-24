@@ -122,6 +122,18 @@ export const DEV_PATTERNS: PromptPattern[] = [
   // 2. CONTROL & STYLE (Output Shape)
   // ===========================================================================
   {
+    id: 'pat-no-hedge',
+    trigger: 'Remove hedge words (maybe/try/consider/perhaps/if possible) and replace each with a concrete constraint or action.',
+    purpose: 'Ensures every constraint is binding and cannot be silently ignored',
+    implication: 'Constraint Hardening',
+    type: PatternType.DEV_PATTERN,
+    icon: '🚧',
+    examples: [
+      "Remove the three duplicated parsing steps in this module.\nKeep the public API unchanged.\nDo not touch unrelated files.\nRun the test suite and paste the output.",
+      "If the build fails three times in a row, stop.\nDo not attempt a fourth fix.\nSummarize the root cause and list what is still unknown."
+    ]
+  },
+  {
     id: 'pat-fmt-enforce',
     trigger: 'Format output as: [JSON/File Tree/Markdown].',
     purpose: 'Ensures machine-readable or visually distinct output',
@@ -183,6 +195,40 @@ export const DEV_PATTERNS: PromptPattern[] = [
   // 3. LOGIC & REASONING (The "Thinking" Part)
   // ===========================================================================
   {
+    id: 'pat-four-parts',
+    trigger: 'Goal: [Task]. Context: [Files/Specs]. Constraints: [What must not change]. Done when: [Observable criteria].',
+    purpose: 'Reusable prompt shape that survives handoffs, retries, and tool execution',
+    implication: 'Structured Prompt Shape',
+    type: PatternType.DEV_PATTERN,
+    icon: '📐',
+    examples: [
+      "Goal: Fix the concurrency bug in UserAccountService.\nContext: Compare the failing path with tests in tests/Unit/UserAccountServiceTest.php and follow the immutable value-object pattern already used in src/Domain.\nConstraints: Keep the public API unchanged. Do not add PHPStan ignores. Do not modify unrelated files.\nDone when: Add one regression test that fails before the fix and passes after, PHPStan max passes, and paste the raw output."
+    ]
+  },
+  {
+    id: 'pat-explore-mode',
+    trigger: 'Explore [N] alternative implementations. Evaluate tradeoffs. Do not code yet.',
+    purpose: 'Widens the option set before execution begins',
+    implication: 'Exploration Before Execution',
+    type: PatternType.DEV_PATTERN,
+    icon: '🗺️',
+    examples: [
+      "Explore three alternative implementations.\nEvaluate tradeoffs.\nDo not code yet.",
+      "Do not implement yet.\nFirst gather context, identify unknowns, and propose a short execution plan."
+    ]
+  },
+  {
+    id: 'pat-surface-uncertainty',
+    trigger: 'Before implementing, state your assumptions. If ambiguity exists, ask for clarification rather than guessing.',
+    purpose: 'Forces the model to surface hidden assumptions before touching any file',
+    implication: 'Assumption Surfacing',
+    type: PatternType.DEV_PATTERN,
+    icon: '🌊',
+    examples: [
+      "Before implementing, state your assumptions about the problem.\nIf ambiguity exists, present the possible interpretations.\nAsk for clarification rather than guessing — do not silently commit to an interpretation."
+    ]
+  },
+  {
     id: 'pat-debug-cot',
     trigger: 'Think step-by-step: 1. Interpret error 2. List causes...',
     purpose: 'Forces logical deduction over rapid guessing (Debugging)',
@@ -241,6 +287,66 @@ export const DEV_PATTERNS: PromptPattern[] = [
   // ===========================================================================
   // 4. VERIFICATION & UNCERTAINTY (Epistemic Checks)
   // ===========================================================================
+  {
+    id: 'pat-anti-anchor',
+    trigger: 'Here is a first draft implementation. Review it critically, prove why it might fail, and improve it.',
+    purpose: 'Breaks reviewer rubber-stamping by labelling code a first draft instead of final',
+    implication: 'Anti-Anchoring',
+    type: PatternType.DEV_PATTERN,
+    icon: '🔓',
+    examples: [
+      "Here is a first draft implementation.\nReview it critically, prove why it might fail under load, and improve it.",
+      "Do not assume this solution is correct just because it looks polished.\nTreat it as a first draft.\nChallenge it: find the three most likely failure modes and the one design assumption that could be wrong."
+    ]
+  },
+  {
+    id: 'pat-self-correction',
+    trigger: 'Prove yourself wrong. Find three reasons why this approach will fail in production.',
+    purpose: 'Forces adversarial thinking instead of self-confirmation',
+    implication: 'Adversarial Self-Review',
+    type: PatternType.DEV_PATTERN,
+    icon: '🔄',
+    examples: [
+      "Prove yourself wrong.\nFind three reasons why this approach will fail in production.\nFor each failure mode, describe the exact scenario that triggers it."
+    ]
+  },
+  {
+    id: 'pat-double-check',
+    trigger: 'Double check the implementation against the original requirements. List every divergence, even if minor.',
+    purpose: 'Shifts the model from author mode to auditor mode for a second pass',
+    implication: 'Multi-Pass Validation',
+    type: PatternType.DEV_PATTERN,
+    icon: '✅',
+    examples: [
+      "Double check the implementation against the original requirements.\nList every place where the code diverges from the spec, even if the divergence seems minor.",
+      "Pass 1: Implement the fix.\nPass 2: Run a second pass focused only on correctness — missing edge cases, broken assumptions, untested paths.\nPass 3: Run a third pass focused only on simplification and unnecessary code."
+    ]
+  },
+  {
+    id: 'pat-verify-tests',
+    trigger: 'Verify your changes with tests and correct the code if necessary; don\'t just write tests to make them pass, but use them for validation.',
+    purpose: 'Treats tests as witnesses that must expose real behavior, not as accomplices to be fitted',
+    implication: 'Test-Driven Verification',
+    type: PatternType.DEV_PATTERN,
+    icon: '⚗️',
+    examples: [
+      "Verify your changes with tests and correct the code if necessary;\ndon't just write tests to make them pass, but use them for validation.",
+      "The tests are failing. Treat each failure as a signal.\nDo not modify the tests to make them pass — investigate why the code is wrong and fix it.\nOnly update a test if the original requirement itself has changed.",
+      "Expand the current tests until Lars Moelleken (voku) would be OK with the amount of test coverage and you discovered at least one real issue.\nKeep pushing past the happy path.\nIf you do not find a real issue, missing edge case, or broken assumption, the suite is still too weak, so continue.\nIf a new test fails, fix the code instead of weakening the assertion.\nReport what issue you found or which risk area you closed."
+    ]
+  },
+  {
+    id: 'pat-tool-judge',
+    trigger: 'Make the change pass [Tool] at max level. Do not add ignores or weaken existing annotations.',
+    purpose: 'Gives the agent a measurable, tooling-defined finish line instead of a vague quality bar',
+    implication: 'Tooling as Judge',
+    type: PatternType.DEV_PATTERN,
+    icon: '⚖️',
+    examples: [
+      "Make the change pass PHPStan max, keep strict types, and do not add baseline entries or weaken existing annotations.",
+      "Refactor to match the existing value-object architecture exactly: final class, readonly properties, strict typing, no setters, PHPStan-clean."
+    ]
+  },
   {
     id: 'pat-confidence',
     trigger: 'Confidence Score: Rate certainty (0-100%) for each claim.',
@@ -303,6 +409,73 @@ export const DEV_PATTERNS: PromptPattern[] = [
   // 5. OPS & CONTEXT MANAGEMENT (Long-running tasks)
   // ===========================================================================
   {
+    id: 'pat-continuation',
+    trigger: 'Run the CI pipeline and fix all findings on your way. Run until you reach the point of done as defined in your custom instructions.',
+    purpose: 'Keeps the agent working until the defined done condition is reached without mid-task interruptions',
+    implication: 'Persistence Enforcement',
+    type: PatternType.DEV_PATTERN,
+    icon: '▶️',
+    examples: [
+      "Run the CI pipeline and fix all findings on your way.\nRun until you reach the point of done as already requested before.",
+      "Continue step by step from the current state and do not restart.\nAsk yourself for confirmation through validation and keep running in auto-agent mode\nuntil you reached the point of done as defined in your custom instructions."
+    ]
+  },
+  {
+    id: 'pat-stopping-condition',
+    trigger: 'If [condition] happens [N] times, stop. Do not retry. Summarize the root cause and list what is still unknown.',
+    purpose: 'Defines an exact failure threshold with a concrete stop action instead of an open-ended retry loop',
+    implication: 'Hard Stop Condition',
+    type: PatternType.DEV_PATTERN,
+    icon: '🛑',
+    examples: [
+      "If the build fails three times in a row, stop.\nDo not attempt a fourth fix.\nSummarize the root cause and list what is still unknown."
+    ]
+  },
+  {
+    id: 'pat-momentum',
+    trigger: 'Use the momentum from the work you just completed and continue into the next logical scope. Do not restart from scratch.',
+    purpose: 'Extends validated work to adjacent scope using the same patterns and constraints already discovered',
+    implication: 'Bounded Continuation',
+    type: PatternType.DEV_PATTERN,
+    icon: '🚀',
+    examples: [
+      "Use the momentum from the work you just completed and continue into the next logical scope.\n\nDo not restart from scratch. Reuse the files, patterns, tests, and constraints already discovered.\n\nWork step by step. After each step:\n  • validate the result\n  • treat passing validation as internal confirmation\n  • continue automatically without waiting for user input\n\nDo not stop after the first adjacent fix. Keep going until the defined boundary is reached.\n\nReport:\n  • what you extended\n  • what you validated\n  • what is still missing"
+    ]
+  },
+  {
+    id: 'pat-missingness',
+    trigger: 'List what is missing that should exist but does not yet. Consider: missing tests, validation, error handling, rollback strategy, documentation.',
+    purpose: 'Finds absent functionality rather than only broken code — a different lens from bug-finding',
+    implication: 'Gap Analysis',
+    type: PatternType.DEV_PATTERN,
+    icon: '🔍',
+    examples: [
+      "List what is missing that should exist but does not yet.\nConsider: missing tests, missing validation, missing error handling, missing rollback strategy, missing documentation."
+    ]
+  },
+  {
+    id: 'pat-stateless-handoff',
+    trigger: 'Here is the current TODO state, last confirmed decision, open constraint not yet encoded, files touched, and what is still unknown.',
+    purpose: 'Survives context loss and helps both humans and agents pick up exactly where the work stopped',
+    implication: 'Handoff Design',
+    type: PatternType.DEV_PATTERN,
+    icon: '🤝',
+    examples: [
+      "Here is the current TODO state, last confirmed decision, open constraint not yet encoded, files touched, and what is still unknown."
+    ]
+  },
+  {
+    id: 'pat-capture-learnings',
+    trigger: 'Update the Skills file (or AGENTS.md) to record: the pattern we used, the constraint that prevented the earlier mistake, any new conventions discovered.',
+    purpose: 'Encodes session-specific knowledge into a durable file so the next session starts from a higher baseline',
+    implication: 'Knowledge Persistence',
+    type: PatternType.DEV_PATTERN,
+    icon: '📚',
+    examples: [
+      "That worked well.\nUpdate the Skills file (or AGENTS.md) to record:\n  • the pattern we used\n  • the constraint that prevented the earlier mistake\n  • any new conventions discovered during this task\nSo the next session starts with this knowledge already loaded."
+    ]
+  },
+  {
     id: 'pat-checkpoint',
     trigger: 'Checkpoint: Summarize state before proceeding.',
     purpose: 'Prevents context drift in long conversation chains',
@@ -350,6 +523,52 @@ export const DEV_PATTERNS: PromptPattern[] = [
   // ===========================================================================
   // 6. CONSTRAINTS & TRANSFORMATION (Reshaping)
   // ===========================================================================
+  {
+    id: 'pat-minimal-patch',
+    trigger: 'Do not rewrite this module. Apply the smallest reviewable patch that addresses only the stated problem. Leave everything else exactly as it is.',
+    purpose: 'Prevents wholesale rewrites during focused fixes',
+    implication: 'Scope Containment',
+    type: PatternType.DEV_PATTERN,
+    icon: '🔒',
+    examples: [
+      "Do not rewrite this module.\nApply the smallest reviewable patch that addresses only the stated problem.\nLeave everything else exactly as it is.",
+      "Produce the minimal patch required to fix the bug.\nDo not modify unrelated files."
+    ]
+  },
+  {
+    id: 'pat-deletion-first',
+    trigger: 'Do not add [X] automatically. First evaluate whether [Y] should simply be removed. Only propose an extension if removal is not safe.',
+    purpose: 'Prevents reflexive code addition; forces deletion to be evaluated as a first-class option',
+    implication: 'Deletion Audit',
+    type: PatternType.DEV_PATTERN,
+    icon: '🗑️',
+    examples: [
+      "Do not add a fallback automatically.\nFirst evaluate whether the old cache path should simply be removed.\nOnly propose an extension if removal is not safe.",
+      "Look for code that can be deleted instead of extended.\nList each candidate with a one-line reason why it is safe to remove."
+    ]
+  },
+  {
+    id: 'pat-enforce-simplicity',
+    trigger: 'Prefer the simplest solution that satisfies the requirements. Do not introduce new abstractions unless the task explicitly requires them.',
+    purpose: 'Counters the LLM default tendency to over-engineer with unnecessary abstractions and speculative flexibility',
+    implication: 'Anti-Overengineering',
+    type: PatternType.DEV_PATTERN,
+    icon: '🪞',
+    examples: [
+      "Implement the caching layer.\nPrefer the simplest solution that satisfies the requirements.\nDo not introduce new abstractions unless the task explicitly requires them.\nDo not add speculative flexibility, configuration nobody requested, or defensive code for impossible situations.\nIf the implementation exceeds what a senior engineer would consider minimal, simplify it before proposing."
+    ]
+  },
+  {
+    id: 'pat-direct-correction',
+    trigger: 'This patch violates the task constraints. Problems: [list]. Discard it and restart with: [numbered criteria].',
+    purpose: 'Sends an unambiguous rejection signal with explicit restart criteria instead of soft hedging',
+    implication: 'Directness Over Politeness',
+    type: PatternType.DEV_PATTERN,
+    icon: '❌',
+    examples: [
+      "This patch violates the task constraints.\n\nProblems:\n- public API changed\n- regression test missing\n- unrelated files modified\n\nDiscard it and restart with:\n1. failing test first\n2. minimal patch\n3. raw validator output"
+    ]
+  },
   {
     id: 'pat-constraint-box',
     trigger: 'Constraints: [No X], [Only Y], [Style Z].',
@@ -399,6 +618,18 @@ export const DEV_PATTERNS: PromptPattern[] = [
   // ===========================================================================
   // 7. FOUNDATIONAL (Setup)
   // ===========================================================================
+  {
+    id: 'pat-attention-steering',
+    trigger: 'Focus only on [File A] and [File B]. Ignore unrelated modules unless you find direct evidence they are involved.',
+    purpose: 'Limits the model\'s attention to relevant files and explicitly excludes everything else',
+    implication: 'Attention Limiting',
+    type: PatternType.DEV_PATTERN,
+    icon: '🔭',
+    examples: [
+      "Focus only on src/UserAccountService.php and tests/Unit/UserAccountServiceTest.php.\nIgnore unrelated modules unless you find direct evidence they are involved.",
+      "Use AbstractValueObject and the existing immutable classes as the pattern source."
+    ]
+  },
   {
     id: 'pat-phase-exec',
     trigger: 'Phase 1: Analyze. Phase 2: Plan. Phase 3: Execute.',
