@@ -7,7 +7,7 @@ import type { PromptPattern } from '../types';
 // Configuration
 const DEBOUNCE_DELAY = 300; // ms to wait before showing menu
 const MIN_TRIGGER_LENGTH = 1; // minimum chars after / to show menu
-const ENABLE_DOUBLE_SLASH = false; // Set to true to require // instead of /
+const ENABLE_DOUBLE_SLASH = true; // Use // instead of / to avoid conflicts with native slash commands
 
 // Track the currently focused element
 let currentElement: HTMLElement | null = null;
@@ -177,11 +177,31 @@ document.addEventListener('input', (e) => {
   
   // Only proceed if input event contains "/" character
   if (e instanceof InputEvent && e.data !== '/') {
-    // Still check if we need to hide menu
+    // Still check if we need to hide menu or update filter
     const text = getElementText(target);
     const cursorPos = getCursorPosition(target);
     if (!isSlashAtCursor(text, cursorPos)) {
       hidePromptMenu();
+    } else if (slashCommandActive) {
+      // Update the filter as the user types after the trigger
+      const searchStart = Math.max(0, cursorPos - 50);
+      const textBeforeCursor = text.substring(searchStart, cursorPos);
+      // When double-slash mode is on, find // and skip both chars; otherwise find / and skip one
+      let queryStart: number;
+      if (ENABLE_DOUBLE_SLASH) {
+        const doubleSlashIndex = textBeforeCursor.lastIndexOf('//');
+        queryStart = doubleSlashIndex !== -1 ? doubleSlashIndex + 2 : -1;
+      } else {
+        const singleSlashIndex = textBeforeCursor.lastIndexOf('/');
+        queryStart = singleSlashIndex !== -1 ? singleSlashIndex + 1 : -1;
+      }
+      if (queryStart !== -1) {
+        const newQuery = textBeforeCursor.substring(queryStart).toLowerCase();
+        if (newQuery !== searchQuery) {
+          searchQuery = newQuery;
+          showPromptMenu(target, searchQuery);
+        }
+      }
     }
     return;
   }
@@ -552,11 +572,14 @@ function insertPrompt(pattern: PromptPattern) {
   if (!currentElement) return;
   
   const text = getElementText(currentElement);
-  const lastSlashIndex = text.lastIndexOf('/');
+  // When double-slash is enabled, find // as the trigger start; otherwise find /
+  const triggerStart = ENABLE_DOUBLE_SLASH
+    ? text.lastIndexOf('//')
+    : text.lastIndexOf('/');
   
-  if (lastSlashIndex !== -1) {
+  if (triggerStart !== -1) {
     // Replace the slash command with the prompt
-    const newText = text.substring(0, lastSlashIndex) + pattern.trigger;
+    const newText = text.substring(0, triggerStart) + pattern.trigger;
     setElementText(currentElement, newText);
     
     // Set cursor position at the end
