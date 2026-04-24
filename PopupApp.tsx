@@ -164,7 +164,7 @@ const PopupApp: React.FC = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search patterns... (or type / in any field)"
+            placeholder="Search patterns... (or type // in any field)"
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           />
         </div>
@@ -244,7 +244,7 @@ const PopupApp: React.FC = () => {
       {/* Footer */}
       <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
         <p className="text-[10px] text-gray-600 text-center">
-          💡 Type <code className="bg-gray-200 px-1 rounded">/</code> in any text field to search • 
+          💡 Type <code className="bg-gray-200 px-1 rounded">//</code> in any text field to search • 
           <code className="bg-gray-200 px-1 rounded mx-1">Ctrl+Shift+I</code> to quick insert
         </p>
       </div>
