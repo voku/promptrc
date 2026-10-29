@@ -85,7 +85,9 @@ initPageObserver();
 
 // Check if extension is enabled for this site
 chrome.storage.sync.get(['disabledSites', 'extensionEnabled'], (result) => {
-  const disabledSites = result.disabledSites || [];
+  const disabledSites: string[] = Array.isArray(result.disabledSites)
+    ? result.disabledSites.filter((site): site is string => typeof site === 'string')
+    : [];
   const currentHostname = window.location.hostname;
   siteDisabled = disabledSites.includes(currentHostname);
   extensionEnabled = result.extensionEnabled !== false; // Default to true
