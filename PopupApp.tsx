@@ -45,7 +45,9 @@ const PopupApp: React.FC = () => {
         
         // Check if site is disabled
         chrome.storage.sync.get(['disabledSites'], (result) => {
-          const disabledSites = result.disabledSites || [];
+          const disabledSites: string[] = Array.isArray(result.disabledSites)
+            ? result.disabledSites.filter((site): site is string => typeof site === 'string')
+            : [];
           setSiteDisabled(disabledSites.includes(url.hostname));
         });
       }
@@ -90,7 +92,9 @@ const PopupApp: React.FC = () => {
     
     // Update storage
     chrome.storage.sync.get(['disabledSites'], (result) => {
-      let disabledSites = result.disabledSites || [];
+      let disabledSites: string[] = Array.isArray(result.disabledSites)
+        ? result.disabledSites.filter((site): site is string => typeof site === 'string')
+        : [];
       
       if (newDisabledState) {
         // Add to disabled list
